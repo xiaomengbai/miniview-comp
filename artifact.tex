@@ -1,0 +1,458 @@
+\section{Abstract}
+\label{sec:abstract}
+This artifact includes source code, scripts and datasets required to reproduce the experimental figures in the
+evaluation of the MM'18 paper, which is entitled ``MiniView Layout for Bandwidth-Efficient 360-Degree Video''
+\cite{Xiao:2018:MLB:3240508.3240705}. The artifact reports the comparison results among the standard cube layout
+(CUBE), the equi-angular layout (EAC), and the MiniView layout (MVL) in terms of compressed video size, visual quality
+of views and decoding and rendering time.
+
+
+\section{Artifact description}
+\label{sec:description}
+The artifact is available at
+
+{\footnotesize {\tt {\url https://github.com/bingsyslab/mm19-artifact}}}
+
+\noindent without the datasets used in the evaluation. The datasets are accessible at
+
+{\footnotesize {\tt {\url https://dl.dropboxusercontent.com/s/snlomfjoh7ybsk3/dataset.tgz}}}
+
+\noindent, and it can also be automatically downloaded by running the script in the artifact. The artifact includes a
+patch to {\tt ffmpeg} ({\tt 360-project} filter), running scripts, documentations and a small dataset for
+verification.
+
+
+\subsection{Folder structure}
+\label{sec:folder}
+The folder structure of the artifact is shown as follows:
+%\begin{lstlisting}[language=bash, numbers=none, frame=none, morekeywords={mm19-artifact, layouts, shaders, Diving, 1280}]
+\begin{lstlisting}[language=bash, numbers=none, frame=none]
+  mm19-artifact/
+  |- makefile
+  |- makefile.sub
+  |- cdf.pl
+  |- cdf.gp
+  |- config-output-pdf.gp
+  |- remap.pl
+  |- README.md
+  |- 360_project.patch
+  |- layouts/
+     |- %.lt
+  |- shaders/
+     |- %.glsl
+  |- Diving/
+\end{lstlisting}
+     %% |- 1280/
+     %%    |- %.mp4
+     %%    |- %.txt
+
+\noindent{\tt makefile}: the script controlling experimental setups, evaluations, and plotting.
+
+\noindent{\tt makefile.sub}: the script carrying out evaluations for one video.
+
+\noindent{\tt cdf.pl}: the script collecting metrics from a set of videos.
+
+\noindent{\tt config-output-pdf.gp}, {\tt cdf.gp}: the scripts plotting CDF figures.
+
+\noindent{\tt remap.pl}: the script producing 360-degree videos with a specific layout from an HD equirectangular video.
+
+\noindent{\tt README.md}: the documentation of the artifact.
+
+\noindent{\tt 360\_project.patch}: the patch file to {\tt ffmpeg} that installs the {\tt 360- project} filter.
+
+\noindent{\tt layouts/}: the folder holding different layout files.
+
+\noindent{\tt shaders/}: the folder holding relevant OpenGL shaders.
+
+\noindent{\tt Diving/}: the example video dataset.
+
+\subsection{Datasets}
+\label{sec:datasets}
+The videos and user traces are from publicly available
+datasets~\cite{Corbillon:2017:VHM:3083187.3083215,Wu:2017:DEU:3083187.3083210}. For fairness, we transcode all videos
+into the equirectangular layout at the resolution of 3840x2048, and these videos are chunked into segments of 1
+second. In addition, the user orientation traces are unified into {\tt .txt} files, in which a line is a sample and it looks like
+
+{\tt 0.141033 4.000000 -15.787280 174.084166}
+
+\noindent. The items are the timestamp in seconds, the line number, and the head rotations surrounding x-axis and
+y-axis, respectively. We ignore the head rotation surrounding z-axis since users rarely change their head around this
+axis. The video segments and the orientation files are named in the formats of {\tt \$\{sec\}\_sec.mp4} and {\tt
+  uid-\$\{uid\}\_raw.txt}, respectively.
+
+
+\begin{table*}\centering
+\ra{1.2}
+\caption{Dataset description}
+\label{tab:dataset}
+\begin{tabular}{@{}lll@{}} \toprule
+
+   &  \# of traces & Video names \\
+% \cmidrule{2-4} \cmidrule{6-8} \cmidrule{10-12}
+\midrule
+    Dataset-1~\cite{Corbillon:2017:VHM:3083187.3083215} & 53 & {\bf Diving}, Paris, {\bf Rollercoaster}, Timelapse, Venise \\
+    Dataset-2~\cite{Wu:2017:DEU:3083187.3083210}        & 48 & Conan\_Gore\_Fly, Cooking\_Battle, {\bf Front}, Help, Rhinos, \\
+                                                        &    & Conan\_Weird\_Al, Football, {\bf Tahiti\_Surf}, FemaleBasketball, \\
+                                                        &    & Fighting, Korean, Reloaded, RioVR, TFBoy, VoiceToy,  Anitta  \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+The datasets include 21 videos. 5 of them have 58 users' view orientations while the other 16 videos have 48 users'
+head movement traces. The list of these video names are shown in Table~\ref{tab:dataset}. In the evaluation, we
+distinguish them into two groups: {\it moving-camera} and {\it static-camera} videos. In Table~\ref{tab:dataset}, the
+{\it moving-camera} videos are presented in bold.
+
+
+\section{Installation}
+\label{sec:installation}
+Before the experiment workflow, an {\tt ffmpeg} with {\tt 360-project} filter need to be built and all datasets should
+be downloaded.
+
+\subsection{Dependencies}
+The {\tt 360-project} filter has been tested with the {\tt master} branch of {\tt ffmpeg} with the ref
+
+{\tt 37e4c226c06c4ac6b8e3a0ccb2c0933397d6f96f}
+
+\noindent and is expected to be correctly built with the latest {\tt ffmpeg} source code. The experiments are
+successfully carried out on Ubuntu 18.04 and Ubuntu 16.04. The tested OpenGL version is OpenGL 3.3 (Core Profile) Mesa
+18.0.5. The scripts in the artifact use Gnuplot 5.2 patchlevel 2, Perl 5.018 and GNU Make 4.1.
+
+To install the software dependencies on a Ubuntu system, run the following commands:
+\begin{lstlisting}[language=bash, numbers=none, morekeywords={sudo, apt,-,get, install}, deletekeywords={enable}]
+$ sudo apt-get install autoconf automake build-essential \
+  cmake git-core libass-dev libfreetype6-dev libsdl2-dev \
+  libtool libva-dev libvdpau-dev libvorbis-dev libxcb1-dev \
+  libxcb-shm0-dev libxcb-xfixes0-dev pkg-config \
+  texinfo wget zlib1g-dev libglew-dev libglfw3-dev \
+  libx264-dev gnuplot make yasm
+\end{lstlisting}
+
+\noindent{\bf Hardware dependencies:} Running this artifact on a platform equipped with a GPU is highly recommended,
+which can greatly accelerate the projection operations.
+
+\subsection{Running artifact over {\tt ssh}}
+Since the artifact is developed based on GLFW, it requires a display to create a window, though it is invisible. For
+running this artifact on a server  without a monitor connected via {\tt ssh}, the virtual framebuffer needs to be
+installed:
+\begin{lstlisting}[language=bash, numbers=none, morekeywords={sudo, apt, -, get, install}, deletekeywords={enable}]
+$ sudo apt-get install xvfb
+\end{lstlisting}
+In the experiment workflow, two commands (``{\tt make remap-videos}'' and ``{\tt make view-videos}'') processing videos with
+OpenGL need to be prefixed with {\tt svfb-run} to ensure their successful run. For example:
+\begin{lstlisting}[language=bash, numbers=none, deletekeywords={enable},  morekeywords={make, git, clone, xvfb, -, run}]
+$ xvfb-run make view-videos VNAMES=Diving
+\end{lstlisting}
+Details of these two commands are discussed in Section~\ref{sec:gen-videos}.
+
+%% For running this artifact on a server via {\tt ssh} which has a monitor connected, use the following command to specify the
+%% display name before further actions:
+%% \begin{lstlisting}[language=bash, numbers=none, morekeywords={make, git, clone}, deletekeywords={enable}]
+%% $ export DISPLAY=:0
+%% \end{lstlisting}
+%% In a rare case, the server display has another name, like ``{\tt :1}'' other than ``{\tt :0}''. This can be confirmed by
+%% the following command:
+%% \begin{lstlisting}[language=bash, numbers=none, morekeywords={make, git, clone}, deletekeywords={enable}]
+%% $ who
+%% username   :1       yyyy-mm-dd hh:mm (xxx.xxx.xxx.xx)
+%% \end{lstlisting}
+%% For successfully running this artifact on a server without a monitor connected, the output need to be forwarded to an
+%% X-Window server. Different solutions need to be adopted for clients with different operating systems.
+
+%% \noindent{\bf Windows}: we take {\tt VcXsrv} as the example for Windows clients. 1) Install {\tt VcXsrv} as the X-Window
+%% server. 2) Use {\tt XLaunch} to launch the X-Window server and locate the window name at the left upper corner, such as
+%% ``{\tt DESKTOP-9E5LKU7:0.0}''. 3) Use the following command to connect to the server
+%% \begin{lstlisting}[language=bash, numbers=none, morekeywords={make, git, clone}, deletekeywords={enable}]
+%% $ DISPLAY=DESKTOP-9E5LKU7:0.0 ssh -Y ${SERV_IP}
+%% \end{lstlisting}
+
+
+
+\subsection{Artifact installation}
+\begin{enumerate}[leftmargin=*]
+\item Download the artifact with the following instructions:
+\begin{lstlisting}[language=bash, numbers=none,  morekeywords={make, git, clone}]
+$ git clone https://github.com/bingsyslab/mm19-artifact
+\end{lstlisting}
+%% \end{enumerate}
+
+
+\item Download, patch, and build {\tt ffmpeg} with {\tt 360-project} filter.
+  \begin{itemize}[leftmargin=*]
+  \item Use the {\tt makefile} script to automatically download, patch, and build {\tt ffmpeg}:
+  \end{itemize}
+\begin{lstlisting}[language=bash, numbers=none,  morekeywords={make, git, clone}]
+$ cd mm19-artifact
+$ make prepare-ffmpeg
+\end{lstlisting}
+If {\tt ffmpeg} has been successfully built, two binaries {\tt ffmpeg/ffmpeg} and {\tt ffmpeg/ffprobe} can be found.
+
+%% \begin{itemize}[leftmargin=*]
+\begin{itemize}[leftmargin=*]
+\item If manually building {\tt ffmpeg} is preferred, follow the instructions below:
+\end{itemize}
+%% \end{itemize}
+\begin{lstlisting}[language=bash, numbers=none, morekeywords={make, git, clone}, deletekeywords={enable}]
+  $ cd mm19-artifact
+  $ git clone https://github.com/FFmpeg/FFmpeg ffmpeg
+  $ cd ffmpeg
+  $ git apply ../360_project.patch
+  $ ./configure --enable-gpl --enable-libx264 \
+      --extra-libs='-lglfw -lGLEW -lGL -lGLU'
+  $ make -j8 ffmpeg ffprobe
+\end{lstlisting}
+
+%% \begin{itemize}[leftmargin=*]
+\item To download the datasets:
+%% \end{itemize}
+\begin{lstlisting}[language=bash, numbers=none, morekeywords={make, git, clone}, deletekeywords={enable}]
+  $ make prepare-dataset
+\end{lstlisting}
+This will automatically download a tarball of the dataset named {\tt dataset.tgz} and extract it into a list of
+folders. The tarball is 6.9G and the dataset takes additional 7.6G disk space after decompression. The tarball can also
+be accessed via the link shown in Section~\ref{sec:description}. A video to be tested is organized in the format:
+\begin{lstlisting}[language=bash, numbers=none, frame=none, morekeywords={mm19-artifact, layouts, shaders, Diving, 1280}]
+  Diving/
+   |- 1280/
+      |- %.mp4
+      |- %.txt
+\end{lstlisting}
+For a video ``Diving'', it should contain the HD equirectangular 360-degree video segments and the orientation
+files. Both of them are stored in the directory {\tt 1280/}. Following the details in Section~\ref{sec:datasets} helps
+add a new test video into the experiment.
+
+
+\end{enumerate}
+
+
+\section{Experiment workflow}
+\label{sec:workflow}
+
+The experiment follows three major steps: 1) 360-degree video generation, 2) view video generation, and 3) experimental measurements. A
+full run of this artifact on the provided 21 videos (with the default configurations) takes $\sim$12 hours, and
+additional $\sim$80G disk space will be occupied. The workflow can also be carried out on a single video for proving its
+completeness. In this section, we will first present how to carry out the experiment on an example video
+``Diving''. Then we have an integrated command to run the full experiment presented in our original paper. We will
+further show how to customize this artifact.
+
+
+\begin{table*}\centering
+\ra{1.2}
+\caption{Experimental parameters that can be customized}
+\label{tab:customization}
+\begin{tabular}{@{}llllr@{}} \toprule
+
+  Name & Description & Value format & Default value & Value as a vector?\\
+% \cmidrule{2-4} \cmidrule{6-8} \cmidrule{10-12}
+\midrule
+    {\tt VNAMES} & The folder names of tested videos & \{ {\tt Diving}, {\tt Paris}, $\ldots$\} & All videos & Yes \\
+    {\tt MOVING\_VNAMES} & The names of videos as moving-camera type & \{ {\tt Diving}, {\tt Paris}, $\ldots$\} & {\tt Diving}, {\tt Rollercoaster}, & Yes \\
+     &  &  & {\tt Tahiti\_Surf}, {\tt Front} &  \\
+    {\tt LAYOUTS} & The names of tested layouts & \{{\tt cube}, {\tt eac}, {\tt mv}\} & {\tt cube eac mv} & Yes\\
+    {\tt SCHEMES} & The compression parameters passed to {\tt x264} & \{{\tt crf\$\{N\}}\} & {\tt crf23} & Yes\\
+    {\tt UID\_NR} & The number of users' orientation traces to test & {\tt \$\{N\}} & {\tt 20} & No \\
+    {\tt TIMES\_NR} & The number of video segments to test & {\tt \$\{N\}} & {\tt 10} & No \\
+    {\tt CUBE\_RES} & The resolution of CUBE layout & {\tt \$\{RES\}x\$\{RES\}} & {\tt 1920x1280} & No\\
+    {\tt EAC\_RES} & The resolution of EAC layout & {\tt \$\{RES\}x\$\{RES\}} & {\tt 1920x1280} & No\\
+    {\tt MV\_RES} & The resolution of MiniView layout & {\tt \$\{RES\}x\$\{RES\}} & {\tt 2240x832} & No\\
+    {\tt FOV} & The FoV of generated view videos & {\tt \$\{DEGREE\}x\$\{DEGREE\}} & {\tt 100x100} & No\\
+    {\tt VIEW\_RES} & The resolution of generated view videos & {\tt \$\{RES\}x\$\{RES\}} & {\tt 800x800} & No\\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\subsection{Video generation}
+\label{sec:gen-videos}
+\begin{enumerate}[leftmargin=*]
+  \item To generate 360-degree videos for a given video:
+\begin{lstlisting}[language=bash, numbers=none,  morekeywords={make, git, clone}]
+$ make remap-videos VNAMES=Diving
+\end{lstlisting}
+    This command generates different layouts of 360-degree videos, where the option {\tt VNAMES} specifies which video
+    is used. This artifact is extensively customizable and more details can be found in
+    Section~\ref{sec:customization}. The output videos are generated into {\tt crf23/remaps/} in the names of {\tt
+      \$\{layout\}\_\$\{time\}.mp4}.
+
+  \item To generate view videos:
+\begin{lstlisting}[language=bash, numbers=none,  morekeywords={make, git, clone}]
+$ make view-videos VNAMES=Diving
+\end{lstlisting}
+The view videos directly generated from the HD equirectangular videos ({\tt 1280/\$\{time\}.mp4}) are named as {\tt
+  \%.hd.mp4} in {\tt views/} while the view videos generated from different layouts of 360-degree videos are located at
+{\tt crf23/views/}.
+\end{enumerate}
+
+\subsection{Video analysis}
+\begin{enumerate}[leftmargin=*]
+  \setcounter{enumi}{2}
+\item To measure various metrics:
+\begin{lstlisting}[language=bash, numbers=none,  morekeywords={make, git, clone}]
+$ make psnr-logs VNAMES=Diving
+$ make ssim-logs VNAMES=Diving
+$ make ts-logs VNAMES=Diving
+\end{lstlisting}
+    These commands measure PSNR, SSIM as well as rendering and decoding time, which are preserved as log files stored at
+    {\tt crf23/psnr/}, {\tt crf23/ssim/}, and {\tt crf23/ts/}, respectively. With the videos and log files generated, a
+    test video folder looks like:
+\begin{lstlisting}[language=bash, numbers=none, frame=none]
+  |- Diving/
+    |- 1280/
+      |- ${time}.mp4
+      |- uid-${uid}_raw.txt
+    |- crf23/
+      |- remaps/
+        |- ${layout}_${time}.mp4
+      |- views/
+        |- ${time}.${uid}.${layout}.mp4
+      |- psnr/
+        |- ${time}.${uid}.${layout}.log
+      |- ssim/
+        |- ${time}.${uid}.${layout}.log
+      |- ts/
+        |- ${time}.${uid}.${layout}.log
+    |- views/
+      |- ${time}.${uid}.hd.mp4
+\end{lstlisting}
+
+\item Generate the figures in the PDF format:
+\begin{lstlisting}[language=bash, numbers=none]
+$ make cdfs pdfs VNAMES=Diving
+\end{lstlisting}
+Two types of files are generated with this command. {\tt \%.cdf} is the data file and {\tt \%.pdf} files are the
+figures. There will be four figures showing the measured PSNR ({\tt psnr\_avg.crf23-psnr.pdf}), SSIM ({\tt
+  All.crf23-ssim.pdf}), video size ({\tt size.crf23-remaps.pdf}) and rendering time ({\tt ts.crf23-ts.pdf}).
+
+\end{enumerate}
+
+
+\subsection{Rerun the full experiment}
+
+To repeat the experiments presented in our original paper, use the following command
+\begin{lstlisting}[language=bash, numbers=none]
+  $ make psnr-ssim-ts-rand moving-static-cdfs moving-static-pdfs
+\end{lstlisting}
+The configuration of this experiment is the default ones shown in Section~\ref{sec:customization}. It worth noting that
+this will generate 7 figures since we distinguish the 21 videos into {\it moving-camera} videos and {\it static-camera}
+videos for PSNR, SSIM and video size measurement.
+
+
+%% \item Generate 360-degree videos, view videos, PSNR logs, SSIM logs and decoding and rendering time logs with random
+%%   selected video segments and user orientation traces:
+%% \begin{lstlisting}[language=bash, numbers=none]
+%%   $ make psnr-ssim-ts-rand
+%% \end{lstlisting}
+%% The experiments take $\sim$12 hours to complete, and additional $\sim$80G disk space is needed. After the experiments,
+%% all videos and logs are generated under the corresponding video folders. A video folder looks like
+%% \begin{lstlisting}[language=bash, numbers=none, frame=none, morekeywords={Diving, 1280, crf23, remaps, views, psnr, ssim, ts}]
+%%   |- Diving/
+%%      |- 1280/
+%%         |- ${time}.mp4
+%%         |- uid-${uid}_raw.txt
+%%      |- crf23/
+%%         |- remaps/
+%%            |- ${layout}_${time}.mp4
+%%         |- views/
+%%            |- ${time}.${uid}.${layout}.mp4
+%%         |- psnr/
+%%            |- ${time}.${uid}.${layout}.log
+%%         |- ssim/
+%%            |- ${time}.${uid}.${layout}.log
+%%         |- ts/
+%%            |- ${time}.${uid}.${layout}.log
+%%      |- views/
+%%         |- ${time}.${uid}.hd.mp4
+%% \end{lstlisting}
+%% The 360-degree videos with different layouts are generated into {\tt crf23/remaps/}. The view videos directly generated from
+%% the HD equirectangular videos ({\tt 1280/\$\{time\}.mp4}) are named as {\tt \%.hd.mp4} in {\tt views/} while the view
+%% videos generated from different layouts of 360-degree videos are located at {\tt crf23/views/}. PSNR, SSIM, and
+%% rendering and decoding time logs are stored at {\tt crf23/psnr/}, {\tt crf23/ssim/}, and {\tt crf23/ts/},
+%% respectively.
+
+
+
+\subsection{Experiment customization}
+\label{sec:customization}
+The experiment can be extensively customized. The comprehensive customizable parameters are listed in
+Table~\ref{tab:customization}. An example of customized experiment can be launched like
+\begin{lstlisting}[language=bash, numbers=none]
+  $ make psnr-ssim-ts-rand VNAMES=Paris \
+    FOV=90x90 LAYOUTS=mv SCHEMES=crf18 UID_NR=1 TIMES_NR=5
+\end{lstlisting}
+This means we only carry experiments over the {\tt Paris} video and only test the MiniView layout. When generating the
+MiniView videos, the compression parameter uses {\tt crf=18}. The FoV of view videos is 90$^{\circ}$x90$^{\circ}$. We
+randomly test over 5 video segments and 1 orientation trace.
+
+
+
+
+\section{{\tt 360-project} filter}
+\label{sec:filter}
+We implement {\tt 360-project} as an {\tt ffmpeg} filter that generates a user view from an input 360-degree
+frame. Understanding this tool is not necessary to evaluate the MiniView Layout. We will give a brief description to
+this tool and further details can be found in the documentation of this artifact.
+
+An example of using this filter is like:
+\begin{lstlisting}[language=bash, numbers=none, morekeywords={make, git, clone}, deletekeywords={enable}, basicstyle=\ttfamily\tiny]
+  $ ./ffmpeg -loglevel 'info' -y -i cube.mp4 -filter:v \
+    "project=800:800:90:90:0:180:0:vertex.glsl:eqdis.glsl::cube.lt:0.0:1.0" \
+    back.mp4
+\end{lstlisting}
+This command generates a view video from the 360-degree video {\tt cube.mp4}. The output view video has the resolution
+of 800x800, and its FoV is 90$^{\circ}$x90$^{\circ}$. The video shows what a user will watch as she turns her head
+following \{0$^{\circ}$, 180$^{\circ}$, 0$^{\circ}$\}, which is exactly the view from her back. An orientation file can
+be passed in to simulate the user's head movement. {\tt vertex.glsl} and {\tt eqdis.glsl} are the vertex shader and the
+fragment shader used to produce the view video. {\tt cube.lt} is the layout file describing the input video.
+
+
+\section{Notes}
+\label{sec:notes}
+\begin{itemize}[leftmargin=*]
+\item In the artifact, a list of commands can be used to ease clean operations:
+\end{itemize}
+\begin{lstlisting}[language=bash, numbers=none]
+  $ make clean-remaps
+  $ make clean-views
+  $ make clean-logs
+  $ make clean-cdfs
+  $ make clean-pdfs
+\end{lstlisting}
+These commands remove remapped videos, view videos, experimental logs, CDF data files, and PDF figures,
+respectively.
+
+\begin{itemize}[leftmargin=*]
+\item If you prefer building the {\tt ffmpeg} at another place, you need to redirect the {\tt ffmpeg} folder in the
+  {\tt makefile}:
+\end{itemize}
+\begin{lstlisting}[language=bash, numbers=none]
+  export FFMPEG_DIR := ${PATH_TO_FFMPEG}
+\end{lstlisting}
+
+
+%% \section{Artifact}
+
+%% \subsection{Abstract}
+%% This artifact includes source code, scripts and data set required to reproduce the experimental figures in the
+%% evaluation of the MM'18 paper, which is entitled ``MiniView Layout for Bandwidth-Efficient 360-Degree Video''
+%% \cite{Xiao:2018:MLB:3240508.3240705}. The artifact reports the comparison results among the standard cube layout
+%% (CUBE), the equi-angular layout (EAC), and the MiniView layout (MVL) in terms of compressed video size, visual quality
+%% of views and decoding and rendering time.
+
+%% \subsection{Artifact check-list (meta-information)}
+%% \begin{itemize}[leftmargin=*]
+%%   \item {\bf Algorithm}: Standard Cube projection, Equi-angular projection, MiniView projection.
+%%   \item {\bf Program}: A patched {\tt ffmpeg} executables.
+%%   \item {\bf Compilation}: Use {\tt ffmpeg} building system.
+%%   \item {\bf Binary}: {\tt ffmpeg} and {\tt ffprobe}.
+%%   \item {\bf Data set}: publicly available equirectangular 360-degree videos (.mp4) and orientation files (.txt).
+%%   \item {\bf Run-time environment}: ???
+%%   \item {\bf Hardware}: GPU
+%%   \item {\bf Metrics}: The video segment size, the per-segment average PSNRs and SSIMs, and the wall-clock time of decoding and rendering in different layouts.
+%%   \item {\bf Output}: The experimental figures in PDF format, 360-degree videos in different layouts, and view videos.
+%%   \item {\bf Experiment customization}: The FoV and the view video resolution can be altered. The encoding flag can be chosen from {\tt crf} or {\tt cbr}. The videos, the video segment number of each video and the user orientation trace number to evaluate can be changed.
+%%   \item {\bf How much disk space required (approximately)?}: 70GB
+%%   \item {\bf How much time is needed to complete experiments (approximately)?}: 10 hours
+%%   \item {\bf Publicly available?}: Yes
+%%   \item {\bf Code/data license (if publicly available)?}: GPL
+%%   \item {\bf Archived?}: Yes
+%% \end{itemize}
+
